@@ -81,7 +81,6 @@ static BOOL _alwaysUseMainBundle = NO;
 - (void)showPromptWithChecks:(BOOL)withChecks
       displayRateLaterButton:(BOOL)displayRateLaterButton;
 - (void)showRatingAlert:(BOOL)displayRateLaterButton;
-- (void)showRatingAlert;
 - (BOOL)ratingAlertIsAppropriate;
 - (BOOL)ratingConditionsHaveBeenMet;
 - (void)incrementUseCount;
@@ -269,8 +268,11 @@ static BOOL _alwaysUseMainBundle = NO;
 }
 
 - (void)showRatingAlert:(BOOL)displayRateLaterButton {
+    
   UIAlertView *alertView = nil;
-  if (displayRateLaterButton) {
+    
+  if (displayRateLaterButton && _timeBeforeReminding > 0) {
+      
   	alertView = [[UIAlertView alloc] initWithTitle:self.alertTitle
                                            message:self.alertMessage
                                           delegate:self
@@ -291,11 +293,6 @@ static BOOL _alwaysUseMainBundle = NO;
     if (delegate && [delegate respondsToSelector:@selector(appiraterDidDisplayAlert:)]) {
              [delegate appiraterDidDisplayAlert:self];
     }
-}
-
-- (void)showRatingAlert
-{
-  [self showRatingAlert:true];
 }
 
 // is this an ok time to show the alert? (regardless of whether the rating conditions have been met)
@@ -363,11 +360,13 @@ static BOOL _alwaysUseMainBundle = NO;
 
 - (void)incrementUseCount {
 	// get the app's version
-	NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey];
+    NSString *version = [self currentAppVersion];
 	
 	// get the version number that we've been tracking
 	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
 	NSString *trackingVersion = [userDefaults stringForKey:kAppiraterCurrentVersion];
+    
 	if (trackingVersion == nil)
 	{
 		trackingVersion = version;
@@ -397,16 +396,36 @@ static BOOL _alwaysUseMainBundle = NO;
 	else
 	{
 		// it's a new version of the app, so restart tracking
-		[userDefaults setObject:version forKey:kAppiraterCurrentVersion];
-		[userDefaults setDouble:[[NSDate date] timeIntervalSince1970] forKey:kAppiraterFirstUseDate];
-		[userDefaults setInteger:1 forKey:kAppiraterUseCount];
-		[userDefaults setInteger:0 forKey:kAppiraterSignificantEventCount];
-		[userDefaults setBool:NO forKey:kAppiraterRatedCurrentVersion];
-		[userDefaults setBool:NO forKey:kAppiraterDeclinedToRate];
-		[userDefaults setDouble:0 forKey:kAppiraterReminderRequestDate];
+		
+        [self resetAllTracking];
 	}
 	
 	[userDefaults synchronize];
+}
+
++ (void)resetAllTracking {
+    
+    [[self sharedInstance] resetAllTracking];
+}
+
+- (void)resetAllTracking {
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    [userDefaults setObject: [self currentAppVersion] forKey:kAppiraterCurrentVersion];
+    [userDefaults setDouble:[[NSDate date] timeIntervalSince1970] forKey:kAppiraterFirstUseDate];
+    [userDefaults setInteger:1 forKey:kAppiraterUseCount];
+    [userDefaults setInteger:0 forKey:kAppiraterSignificantEventCount];
+    [userDefaults setBool:NO forKey:kAppiraterRatedCurrentVersion];
+    [userDefaults setBool:NO forKey:kAppiraterDeclinedToRate];
+    [userDefaults setDouble:0 forKey:kAppiraterReminderRequestDate];
+    
+    [userDefaults synchronize];
+}
+
+- (NSString *)currentAppVersion {
+    
+    return [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey];
 }
 
 - (void)incrementSignificantEventCount {
@@ -466,7 +485,7 @@ static BOOL _alwaysUseMainBundle = NO;
 	{
         dispatch_async(dispatch_get_main_queue(),
                        ^{
-                           [self showRatingAlert];
+                           [self showRatingAlert: YES];
                        });
 	}
 }
@@ -480,7 +499,7 @@ static BOOL _alwaysUseMainBundle = NO;
 	{
         dispatch_async(dispatch_get_main_queue(),
                        ^{
-                           [self showRatingAlert];
+                           [self showRatingAlert: YES];
                        });
 	}
 }

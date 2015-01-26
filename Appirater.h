@@ -242,6 +242,9 @@ extern NSString *const kAppiraterReminderRequestDate;
  */
 + (void) setTimeBeforeReminding:(double)value;
 
+
++ (void)resetAllTracking;
+
 /*!
  Set customized title for alert view.
  */
