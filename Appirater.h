@@ -143,6 +143,11 @@ extern NSString *const kAppiraterReminderRequestDate;
  */
 + (void)userDidSignificantEvent:(BOOL)canPromptForRating;
 
+/**
+ *  Weight - determines how many significants are counter
+ */
++ (void)userDidSignificantEventWithWeight:(NSInteger)weight canPrompt:(BOOL)canPromptForRating;
+
 /*!
  Tells Appirater to try and show the prompt (a rating alert). The prompt will be showed
  if there is connection available, the user hasn't declined to rate

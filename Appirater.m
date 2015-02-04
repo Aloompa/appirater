@@ -494,18 +494,20 @@ static BOOL _alwaysUseMainBundle = NO;
 	}
 }
 
-- (void)incrementSignificantEventAndRate:(BOOL)canPromptForRating {
+- (BOOL)incrementSignificantEventAndRate:(BOOL)canPromptForRating {
 	[self incrementSignificantEventCount];
+    
+    BOOL showPrompt = canPromptForRating && [self ratingConditionsHaveBeenMet] && [self ratingAlertIsAppropriate];
 	
-    if (canPromptForRating &&
-        [self ratingConditionsHaveBeenMet] &&
-        [self ratingAlertIsAppropriate])
+    if (showPrompt)
 	{
         dispatch_async(dispatch_get_main_queue(),
                        ^{
                            [self showRatingAlert: YES];
                        });
 	}
+    
+    return showPrompt;
 }
 
 - (BOOL)userHasDeclinedToRate {
@@ -549,6 +551,18 @@ static BOOL _alwaysUseMainBundle = NO;
                    ^{
                        [[Appirater sharedInstance] incrementAndRate:canPromptForRating];
                    });
+}
+
++ (void)userDidSignificantEventWithWeight:(NSInteger)weight canPrompt:(BOOL)canPromptForRating {
+    
+    BOOL didPrompt = NO;
+    
+    while (weight != 0 && !didPrompt) {
+        
+        didPrompt = [[Appirater sharedInstance] incrementSignificantEventAndRate:canPromptForRating];
+        
+        weight--;
+    }
 }
 
 + (void)userDidSignificantEvent:(BOOL)canPromptForRating {
