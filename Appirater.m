@@ -335,27 +335,31 @@ static BOOL _alwaysUseMainBundle = NO;
 	NSDate *dateOfFirstLaunch = [NSDate dateWithTimeIntervalSince1970:[userDefaults doubleForKey:kAppiraterFirstUseDate]];
 	NSTimeInterval timeSinceFirstLaunch = [[NSDate date] timeIntervalSinceDate:dateOfFirstLaunch];
 	NSTimeInterval timeUntilRate = 60 * 60 * 24 * _daysUntilPrompt;
-	if (timeSinceFirstLaunch < timeUntilRate)
-		return NO;
+    BOOL enoughDays = (timeSinceFirstLaunch > timeUntilRate);
 	
 	// check if the app has been used enough
 	NSInteger useCount = [userDefaults integerForKey:kAppiraterUseCount];
-	if (useCount < _usesUntilPrompt)
-		return NO;
+    BOOL enoughUses = (useCount > _usesUntilPrompt);
 	
 	// check if the user has done enough significant events
 	NSInteger sigEventCount = [userDefaults integerForKey:kAppiraterSignificantEventCount];
-	if (sigEventCount < _significantEventsUntilPrompt)
-		return NO;
+    BOOL enoughEvents = (sigEventCount > _significantEventsUntilPrompt);
 	
 	// if the user wanted to be reminded later, has enough time passed?
-	NSDate *reminderRequestDate = [NSDate dateWithTimeIntervalSince1970:[userDefaults doubleForKey:kAppiraterReminderRequestDate]];
-	NSTimeInterval timeSinceReminderRequest = [[NSDate date] timeIntervalSinceDate:reminderRequestDate];
-	NSTimeInterval timeUntilReminder = 60 * 60 * 24 * _timeBeforeReminding;
-	if (timeSinceReminderRequest < timeUntilReminder)
-		return NO;
-	
-	return YES;
+    
+    NSTimeInterval reminderDate = [userDefaults doubleForKey:kAppiraterReminderRequestDate];
+    
+    if (reminderDate != 0) {
+        
+        NSDate *reminderRequestDate = [NSDate dateWithTimeIntervalSince1970: reminderDate];
+        NSTimeInterval timeSinceReminderRequest = [[NSDate date] timeIntervalSinceDate:reminderRequestDate];
+        NSTimeInterval timeUntilReminder = 60 * 60 * 24 * _timeBeforeReminding;
+        BOOL enoughDaysForReminder = (timeSinceReminderRequest > timeUntilReminder);
+        
+        enoughDays = enoughDaysForReminder && enoughDays;
+    }
+    
+	return enoughDays || enoughUses || enoughEvents;
 }
 
 - (void)incrementUseCount {
