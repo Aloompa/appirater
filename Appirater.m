@@ -331,6 +331,23 @@ static BOOL _alwaysUseMainBundle = NO;
 		return YES;
 	
 	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    // if the user wanted to be reminded later, has enough time passed?
+    
+    NSTimeInterval reminderDate = [userDefaults doubleForKey:kAppiraterReminderRequestDate];
+    
+    if (reminderDate != 0) {
+        
+        NSDate *reminderRequestDate = [NSDate dateWithTimeIntervalSince1970: reminderDate];
+        NSTimeInterval timeSinceReminderRequest = [[NSDate date] timeIntervalSinceDate:reminderRequestDate];
+        NSTimeInterval timeUntilReminder = 60 * 60 * 24 * _timeBeforeReminding;
+        BOOL enoughDaysForReminder = (timeSinceReminderRequest > timeUntilReminder);
+        
+        if (!enoughDaysForReminder) {
+            
+            return NO;
+        }
+    }
 	
 	NSDate *dateOfFirstLaunch = [NSDate dateWithTimeIntervalSince1970:[userDefaults doubleForKey:kAppiraterFirstUseDate]];
 	NSTimeInterval timeSinceFirstLaunch = [[NSDate date] timeIntervalSinceDate:dateOfFirstLaunch];
@@ -344,20 +361,6 @@ static BOOL _alwaysUseMainBundle = NO;
 	// check if the user has done enough significant events
 	NSInteger sigEventCount = [userDefaults integerForKey:kAppiraterSignificantEventCount];
     BOOL enoughEvents = (sigEventCount > _significantEventsUntilPrompt);
-	
-	// if the user wanted to be reminded later, has enough time passed?
-    
-    NSTimeInterval reminderDate = [userDefaults doubleForKey:kAppiraterReminderRequestDate];
-    
-    if (reminderDate != 0) {
-        
-        NSDate *reminderRequestDate = [NSDate dateWithTimeIntervalSince1970: reminderDate];
-        NSTimeInterval timeSinceReminderRequest = [[NSDate date] timeIntervalSinceDate:reminderRequestDate];
-        NSTimeInterval timeUntilReminder = 60 * 60 * 24 * _timeBeforeReminding;
-        BOOL enoughDaysForReminder = (timeSinceReminderRequest > timeUntilReminder);
-        
-        enoughDays = enoughDaysForReminder && enoughDays;
-    }
     
 	return enoughDays || enoughUses || enoughEvents;
 }
