@@ -356,11 +356,11 @@ static BOOL _alwaysUseMainBundle = NO;
 	
 	// check if the app has been used enough
 	NSInteger useCount = [userDefaults integerForKey:kAppiraterUseCount];
-    BOOL enoughUses = (useCount >= _usesUntilPrompt);
+    BOOL enoughUses = (_usesUntilPrompt > 0 && useCount >= _usesUntilPrompt);
 	
 	// check if the user has done enough significant events
 	NSInteger sigEventCount = [userDefaults integerForKey:kAppiraterSignificantEventCount];
-    BOOL enoughEvents = (sigEventCount >= _significantEventsUntilPrompt);
+    BOOL enoughEvents = (_significantEventsUntilPrompt> 0 && sigEventCount >= _significantEventsUntilPrompt);
     
 	return enoughDays || enoughUses || enoughEvents;
 }
